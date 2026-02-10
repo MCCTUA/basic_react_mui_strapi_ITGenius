@@ -1,0 +1,18 @@
+# .gitignore (ที่อยู่ด้านนอกสุดข้างๆ docker-compose.yml)
+react-mui-strapi/.env
+backend-folder/.env
+.env
+
+# Dependency
+**/node_modules/
+
+# Environment
+**/.env
+**/.env.local
+
+# Build outputs
+**/dist/
+**/build/
+
+# Docker
+.data/

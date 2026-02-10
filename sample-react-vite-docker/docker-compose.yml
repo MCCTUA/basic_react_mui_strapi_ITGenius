@@ -1,0 +1,36 @@
+# version: '3.9'
+
+services:
+  react-app: # <--- นี่คือชื่อที่คุณตั้ง (Service Name)
+
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: reactapp_vite
+    restart: always
+    volumes:
+      - ./:/usr/app
+      - /usr/app/node_modules
+    ports:
+      - "5173:5173"
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    networks:
+      - web_network # เชื่อมกับ network ด้านล่าง
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx-proxy
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/:/etc/nginx/conf.d:ro
+    depends_on:
+      - react-app # <--- ต้องสะกดเหมือนกันเป๊ะ ตาม Service name ด้านบน
+    networks:
+      - web_network # ต้องอยู่ใน network เดียวกันถึงจะคุยกันได้
+
+networks:
+  web_network:
+    name: reactdockervite # ชื่อที่คุณจะเห็นใน docker network ls
+    driver: bridge

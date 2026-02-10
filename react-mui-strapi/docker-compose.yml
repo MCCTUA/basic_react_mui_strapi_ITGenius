@@ -1,0 +1,108 @@
+# version: '3.9'
+
+# 1. ประกาศ Network ไว้ที่ระดับบนสุดเพียงที่เดียว
+networks:
+  web_network:
+    name: react_mui_strapi_network
+    driver: bridge
+
+# 2. ประกาศ Services ทั้งหมดภายใต้หัวข้อเดียว
+services:
+
+  # React App Development
+  react_dev:
+    build: 
+      context: ./reactapp
+      dockerfile: Dockerfile.dev
+    container_name: reactmui_dev
+    restart: always
+    volumes:
+      - ./reactapp:/usr/app
+      - /usr/app/node_modules  # Bookmarks Volume
+    ports:
+      - 5173:5173
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - PNPM_HOME=/usr/app/.pnpm-home
+    networks:
+      - web_network
+
+  # React App Production
+  react_prod:
+    build: 
+      context: ./reactapp
+      dockerfile: Dockerfile.prod
+    container_name: reactmui_prod
+    restart: always
+    ports:
+      - 4173:4173
+    networks:
+      - web_network
+
+  # Nginx Web Server
+  nginx:
+    image: nginx:latest
+    container_name: nginx_reactmui
+    restart: always
+    ports:
+      - 8800:80
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - react_prod
+    networks:
+      - web_network
+
+  # --- MySQL Database ---
+  mysqldb:
+    image: mysql:8.0
+    container_name: mysql_reactmui
+    # เพิ่มบรรทัดนี้สำหรับ Mac M1/M2/M3
+    platform: linux/amd64 
+    restart: always
+    ports:
+      - 4406:3306
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: strapi
+      MYSQL_USER: strapi
+      MYSQL_PASSWORD: strapi
+    volumes:
+      - ./mysqldb:/var/lib/mysql
+    networks:
+      - web_network
+
+  # Strapi CMS
+  strapi:
+    container_name: strapi_reactmui
+    build:
+      context: ./strapiapp
+      dockerfile: Dockerfile
+    # ใช้ Image ที่เรา build ไว้ หรือให้มัน build ใหม่ถ้ามีการเปลี่ยนแปลง
+    image: mystrapi:latest
+    restart: unless-stopped
+    env_file: ./strapiapp/.env
+    ports:
+      - 1337:1337
+    environment:
+      # เชื่อมต่อไปยัง Service mysqldb ภายใน Network ของ Docker
+      DATABASE_CLIENT: ${DATABASE_CLIENT}
+      DATABASE_HOST: mysqldb           # ตัวนี้พิมพ์ตรงได้เลย เพราะเป็นชื่อ Service ภายใน
+      DATABASE_NAME: ${DATABASE_NAME}
+      DATABASE_USERNAME: ${DATABASE_USERNAME}
+      DATABASE_PORT: ${DATABASE_PORT}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      ADMIN_JWT_SECRET: ${ADMIN_JWT_SECRET}
+      NODE_ENV: ${NODE_ENV}
+    volumes:
+      # Mapping เฉพาะสิ่งที่ต้องแก้แล้วเห็นผลทันที (Hot Reload)
+      - ./strapiapp/src:/opt/app/src # สำคัญมาก: เก็บ Code หลักที่เราเขียน
+      - ./strapiapp/public:/opt/app/public # สำคัญ: เก็บรูปภาพที่ Upload
+      - ./strapiapp/config:/opt/app/config # สำคัญ: เก็บการตั้งค่า Database/Server
+      # ยกเว้น node_modules ไม่ต้อง mapping ทับจากเครื่อง Mac ลงไป
+      - /opt/app/node_modules
+    depends_on:
+      - mysqldb
+    networks:
+      - web_network

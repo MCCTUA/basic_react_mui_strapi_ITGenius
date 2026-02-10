@@ -1,0 +1,13 @@
+FROM node:22-alpine AS build
+WORKDIR /usr/app
+RUN npm install -g pnpm
+COPY package.json pnpm-lock.yaml* ./
+RUN pnpm install
+COPY . .
+RUN pnpm run build
+
+# ใช้ Nginx รันไฟล์ที่ Build แล้ว (วิธีนี้เสถียรกว่า npm run preview มาก)
+FROM nginx:alpine
+COPY --from=build /usr/app/dist /usr/share/nginx/html
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]

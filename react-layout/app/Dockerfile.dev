@@ -1,0 +1,19 @@
+FROM node:22-alpine
+
+WORKDIR /usr/app
+
+# ติดตั้ง pnpm และ copy ไฟล์จัดการ dependency
+RUN npm install -g pnpm
+COPY package.json pnpm-lock.yaml* ./
+
+# ติดตั้ง dependencies
+RUN pnpm install
+
+# Copy โค้ดทั้งหมด
+COPY . .
+
+EXPOSE 5173
+
+# รันในโหมด dev
+# ใช้ pnpm ในการรัน และเพิ่ม --host เพื่อให้แน่ใจว่า Docker ยอมให้เข้าถึงจากภายนอก
+CMD [ "pnpm", "run", "dev", "--host" ]
