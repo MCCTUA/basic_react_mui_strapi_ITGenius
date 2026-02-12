@@ -1,0 +1,33 @@
+@import url('https://fonts.googleapis.com/css2?family=Prompt&display=swap');
+
+body {
+    font-family: 'Prompt', sans-serif !important;
+}
+
+.error {
+    color: red;
+    margin-top: 5px;
+}
+
+.sidebar-link,
+a.sidebar-link {
+    font-size: 18px;
+}
+
+.sidebar-dropdown .sidebar-link {
+    font-size: 16px;
+}
+
+/* เมื่อ wrapper มี class collapsed ให้หด sidebar เหลือ 0 หรือความกว้างที่ต้องการ */
+.wrapper.collapsed .sidebar {
+    margin-left: -250px;
+    /* ปรับตัวเลขตามความกว้างจริงของ Sidebar คุณ */
+    transition: all 0.3s ease-in-out;
+}
+
+/* ปรับพื้นที่ส่วนเนื้อหาหลักให้ขยายเต็มหน้าจอเมื่อ sidebar หายไป */
+.wrapper.collapsed .main {
+    width: 100%;
+    margin-left: 0;
+    transition: all 0.3s ease-in-out;
+}
